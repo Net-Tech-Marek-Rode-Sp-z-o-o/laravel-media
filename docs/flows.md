@@ -33,6 +33,6 @@ package's `FileDirectoryAdapter`.
 
 ## Purge of abandoned uploads
 
-`app:media:purge-uploads` (scheduled daily 03:00) deletes files still **pending** past a threshold
+`media:purge-uploads` (scheduled daily 03:00) deletes files still **pending** past a threshold
 (`--hours`, default 24) — both the stored object and the record — so half-finished uploads don't
 accumulate.

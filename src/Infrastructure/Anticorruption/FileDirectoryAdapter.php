@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace NetCode\Media\Infrastructure\Anticorruption;
 
 use NetCode\Domain\Exception\InvalidArgumentException;
+use NetCode\Media\Api\Contracts\FileDirectory;
+use NetCode\Media\Api\FileSnapshot;
 use NetCode\Media\Application\Ports\ObjectStorage;
-use NetCode\Media\Contract\FileDirectory;
-use NetCode\Media\Contract\FileSnapshot;
 use NetCode\Media\Domain\Contracts\FileRepository;
 use NetCode\Media\Domain\Exceptions\FileNotFoundException;
 use NetCode\Media\Domain\File;

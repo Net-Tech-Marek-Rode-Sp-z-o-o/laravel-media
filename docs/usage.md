@@ -70,5 +70,5 @@ Max upload size and URL TTL are domain policy (`UploadPolicy`: 100 MB, 15-minute
 
 ## Console
 
-`app:media:purge-uploads {--hours=24}` deletes uploads initiated but never completed; it is scheduled
+`media:purge-uploads {--hours=24}` deletes uploads initiated but never completed; it is scheduled
 daily at 03:00 by the service provider.

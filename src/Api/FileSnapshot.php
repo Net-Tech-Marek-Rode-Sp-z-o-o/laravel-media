@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace NetCode\Media\Contract;
+namespace NetCode\Media\Api;
 
 final readonly class FileSnapshot
 {

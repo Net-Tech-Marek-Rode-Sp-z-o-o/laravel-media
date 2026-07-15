@@ -11,7 +11,7 @@ use NetCode\Media\Domain\Contracts\FileRepository;
 
 final class PurgePendingUploadsCommand extends Command
 {
-    protected $signature = 'app:media:purge-uploads {--hours=24}';
+    protected $signature = 'media:purge-uploads {--hours=24}';
 
     protected $description = 'Delete uploads that were initiated but never completed.';
 

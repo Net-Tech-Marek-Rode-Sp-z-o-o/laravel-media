@@ -39,7 +39,9 @@ final class UploadLimitsTest extends TestCase
             ->assertJsonPath('code', 'file.too_large');
 
         $this->assertCount(1, $this->storage->deleted);
-        $this->getJson("/files/{$id}")->assertJsonPath('data.status', 'failed');
+        $this->getJson("/files/{$id}")
+            ->assertJsonPath('data.status', 'failed')
+            ->assertJsonPath('data.download_url', null);
     }
 
     #[Test]

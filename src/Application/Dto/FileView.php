@@ -12,6 +12,6 @@ final readonly class FileView
         public string $mime,
         public int $size,
         public string $status,
-        public string $downloadUrl,
+        public string|null $downloadUrl,
     ) {}
 }

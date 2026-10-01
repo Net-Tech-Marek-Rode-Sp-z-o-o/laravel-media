@@ -39,7 +39,8 @@ final class FilesFlowTest extends TestCase
         $this->getJson("/files/{$id}")
             ->assertOk()
             ->assertJsonPath('data.status', 'completed')
-            ->assertJsonPath('data.original_name', 'contract.pdf');
+            ->assertJsonPath('data.original_name', 'contract.pdf')
+            ->assertJsonPath('data.download_url', "https://s3.test/files/{$id}/contract.pdf");
 
         $this->deleteJson("/files/{$id}")->assertNoContent();
         $this->assertNotEmpty($this->storage->deleted);

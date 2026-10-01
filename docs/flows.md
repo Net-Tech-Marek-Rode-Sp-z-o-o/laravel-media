@@ -29,7 +29,8 @@ Complete, read and delete load the file through `AccessibleFiles`, which asks th
 whether the current user may touch it. A refused file answers **404**, the same as an unknown id.
 
 - `GET /{prefix}/{fileId}` — returns `{data:{id, original_name, mime, size, status, download_url}}` with a
-  fresh presigned **download** URL. Unknown id → **404**.
+  fresh presigned **download** URL for a completed file; `download_url` is `null` for a pending or
+  failed one. Unknown id → **404**.
 - `DELETE /{prefix}/{fileId}` — removes the stored object **and** the record → **204**.
 
 ## Referencing files from other modules — `FileDirectory`
@@ -42,6 +43,6 @@ package's `FileDirectoryAdapter`.
 
 ## Purge of abandoned uploads
 
-`media:purge-uploads` (scheduled daily 03:00) deletes files still **pending** past a threshold
-(`--hours`, default 24) — both the stored object and the record — so half-finished uploads don't
-accumulate.
+`media:purge-uploads` (scheduled daily 03:00) deletes files still **pending** or **failed** past a
+threshold (`--hours`, default 24), both the record and the object under its upload and its stored key,
+so half-finished and rejected uploads don't accumulate.

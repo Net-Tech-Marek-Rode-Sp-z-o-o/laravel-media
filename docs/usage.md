@@ -44,7 +44,7 @@ envelope (Laravel API resources) with snake_case fields. `204` responses have no
 |---|---|---|
 | POST | `/{prefix}` | `{filename,mime,size}` → `201 {data:{file_id,upload_url}}` (presigned S3 PUT url) |
 | POST | `/{prefix}/{fileId}/complete` | `{checksum?}` → `204` (`409` if the object is not in storage or the file is not pending; `422 {message, code}` if the stored file breaks the limits) |
-| GET | `/{prefix}/{fileId}` | `{data:{id,original_name,mime,size,status,download_url}}` (`404` if unknown) |
+| GET | `/{prefix}/{fileId}` | `{data:{id,original_name,mime,size,status,download_url}}` (`404` if unknown; `download_url` is `null` unless the file is `completed`) |
 | DELETE | `/{prefix}/{fileId}` | `204` (removes the object + record) |
 
 Errors map to JSON: file not found → `404`, object-not-confirmed / not-pending → `409`.
@@ -88,7 +88,8 @@ If storage cannot read or delete an object, the request answers `503`; complete 
 - `NetCode\Media\Api\Contracts\FileDirectory` — `snapshots(list<string> $ids, string $requestedBy): list<FileSnapshot>`
   and `areCompleted(list<string> $ids, string $requestedBy): bool`. Files the requester may not access
   are left out of `snapshots` and make `areCompleted` false, the same as unknown ids. Depend on this wherever another module references files by
-  id (e.g. attachments); each `FileSnapshot` carries `{id, originalName, mime, size, downloadUrl}`.
+  id (e.g. attachments); each `FileSnapshot` carries `{id, originalName, mime, size, downloadUrl}`; `downloadUrl` is `null` unless the
+  file is completed.
 
 **Outbound (the host provides):**
 - `NetCode\Media\Application\Ports\CurrentUser` — `id(): string`, the uploader's subject id. **Bind it**
@@ -109,7 +110,8 @@ are published via the domain event publisher.
 
 ## Console
 
-`media:purge-uploads {--hours=24}` deletes uploads initiated but never completed; it is scheduled
+`media:purge-uploads {--hours=24}` deletes uploads that were never completed or were rejected (`pending`
+and `failed`), both their record and their object under `uploads/` and `files/`; it is scheduled
 daily at 03:00 by the service provider.
 
 ## Upgrading from 0.2 to 0.3
@@ -146,6 +148,9 @@ delete it.
   `size` field of the complete request is ignored.
 - Complete can now answer `422 {message, code}`; the file is then `failed` and its object is deleted.
 - `UploadPolicy::MAX_UPLOAD_BYTES` is gone; set `media.max_upload_bytes` instead.
+- `download_url` (HTTP) and `FileSnapshot::$downloadUrl` are `null` unless the file is `completed`.
+- `FileRepository::pendingOlderThan()` is replaced by `unfinishedOlderThan()`, which also returns
+  `failed` files; the purge removes them too.
 - Files with `uploaded_by = null` are refused by the default rule. A custom `FileAccess` decides what
   to do with them; refusing is the safe default.
 

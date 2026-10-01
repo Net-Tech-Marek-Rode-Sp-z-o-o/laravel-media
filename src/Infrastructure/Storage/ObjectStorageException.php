@@ -13,6 +13,11 @@ final class ObjectStorageException extends RuntimeException
         return new self(sprintf('The stored object <%s> could not be read; try again.', $key));
     }
 
+    public static function notMoved(string $key): self
+    {
+        return new self(sprintf('The stored object <%s> could not be moved; try again.', $key));
+    }
+
     public static function notDeleted(string $key): self
     {
         return new self(sprintf('The stored object <%s> could not be deleted.', $key));

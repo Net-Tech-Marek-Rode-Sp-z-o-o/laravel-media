@@ -77,7 +77,8 @@ If storage cannot read or delete an object, the request answers `503`; complete 
 - The type check reads the first 4 KB only. A file that starts like a PDF passes even if the rest is
   something else; treat accepted files as untrusted input.
 - A PUT to the upload URL after complete leaves an object under `uploads/` that no record points to.
-  Add a lifecycle rule that expires the `uploads/` prefix after one day.
+  Add a lifecycle rule that expires the `uploads/` prefix after one day, but only when no completed
+  file still lives there (see the upgrade notes).
 - In a versioned bucket `delete` only adds a delete marker. Add a `NoncurrentVersionExpiration` rule,
   or rejected files keep costing storage.
 
@@ -112,6 +113,16 @@ are published via the domain event publisher.
 daily at 03:00 by the service provider.
 
 ## Upgrading from 0.2 to 0.3
+
+**Warning:** files completed before 0.3 keep their key under `uploads/`; only uploads completed
+after the upgrade move to `files/`. Do not add a lifecycle rule that expires `uploads/` while this
+query returns rows, or S3 deletes those files:
+
+```sql
+select id, key from files where status = 'completed' and key like 'uploads/%';
+```
+
+Move those objects to `files/{id}/{name}` and update `files.key` first.
 
 0.3 closes access to other users' files. Before, any caller that knew a file id could complete, read or
 delete it.

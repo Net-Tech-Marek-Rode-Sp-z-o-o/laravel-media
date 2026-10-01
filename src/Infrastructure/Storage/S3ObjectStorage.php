@@ -57,8 +57,8 @@ final readonly class S3ObjectStorage implements ObjectStorage
     {
         $disk = Storage::disk($this->disk);
 
-        if ($disk->exists($from)) {
-            $disk->move($from, $to);
+        if ($disk->exists($from) && ! $disk->move($from, $to)) {
+            throw ObjectStorageException::notMoved($from);
         }
     }
 

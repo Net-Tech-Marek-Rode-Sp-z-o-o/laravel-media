@@ -45,6 +45,69 @@ final class UploadLimitsTest extends TestCase
     }
 
     #[Test]
+    public function it_applies_the_size_limit_of_the_declared_type(): void
+    {
+        $limits = UploadLimits::of(5000, [
+            'application/pdf' => ['application/pdf'],
+            'text/csv' => ['detected' => ['text/csv', 'text/plain'], 'max_bytes' => 2000],
+        ]);
+
+        $this->assertSame(2000, $limits->maxBytesFor('text/csv'));
+        $this->assertSame(5000, $limits->maxBytesFor('application/pdf'));
+        $this->assertSame(UploadRejection::TooLarge, $limits->rejectionFor(2001, 'text/csv', 'text/plain'));
+        $this->assertNull($limits->rejectionFor(4000, 'application/pdf', 'application/pdf'));
+        $this->assertSame(['text/csv', 'text/plain'], $limits->allowedTypes['text/csv']);
+    }
+
+    #[Test]
+    public function it_uses_the_global_limit_for_a_type_rule_without_max_bytes(): void
+    {
+        $limits = UploadLimits::of(5000, ['text/csv' => ['detected' => ['text/csv']]]);
+
+        $this->assertSame(5000, $limits->maxBytesFor('text/csv'));
+    }
+
+    #[Test]
+    public function it_refuses_an_unknown_key_in_a_type_rule(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        UploadLimits::of(5000, ['text/csv' => ['detected' => ['text/csv'], 'max_size' => 2000]]);
+    }
+
+    #[Test]
+    public function it_refuses_a_type_limit_that_is_not_an_integer(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        UploadLimits::of(5000, ['text/csv' => ['detected' => ['text/csv'], 'max_bytes' => '2000']]);
+    }
+
+    #[Test]
+    public function it_refuses_a_type_rule_without_a_detected_list(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        UploadLimits::of(1000, ['text/csv' => ['max_bytes' => 2000]]);
+    }
+
+    #[Test]
+    public function it_refuses_a_type_limit_below_one_byte(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        UploadLimits::of(1000, ['text/csv' => ['detected' => ['text/csv'], 'max_bytes' => 0]]);
+    }
+
+    #[Test]
+    public function it_refuses_a_detected_type_that_is_not_a_string(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        UploadLimits::of(1000, ['text/csv' => ['text/csv', 42]]);
+    }
+
+    #[Test]
     public function it_refuses_allowed_types_given_as_a_plain_list(): void
     {
         $this->expectException(InvalidArgumentException::class);

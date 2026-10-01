@@ -11,8 +11,8 @@ URL, then confirms.
 
 1. `POST /{prefix}` `{filename, mime, size}` — `InitiateUpload` creates a **pending** `File` (a random
    storage key, the `CurrentUser`'s id as `uploaded_by`), records `FileUploadInitiated`, and returns a
-   presigned S3 **upload** URL: `201 {data:{file_id, upload_url}}`. `size` and `mime` are checked against `media.max_upload_bytes` and
-   `media.allowed_types`.
+   presigned S3 **upload** URL: `201 {data:{file_id, upload_url}}`. `size` and `mime` are checked against `media.allowed_types` and the size
+   limit of the declared type (its own `max_bytes`, or `media.max_upload_bytes`).
 2. The client **PUTs the file bytes to `upload_url`** directly (S3), out of band.
 3. `POST /{prefix}/{fileId}/complete` `{checksum?}` — a non-pending file → **409** (`FileMustBePending`).
    `CompleteUpload` moves the object on the server from `uploads/{id}/…` to `files/{id}/…`

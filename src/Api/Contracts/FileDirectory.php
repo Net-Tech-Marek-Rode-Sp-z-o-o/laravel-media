@@ -12,8 +12,8 @@ interface FileDirectory
      * @param list<string> $ids
      * @return list<FileSnapshot>
      */
-    public function snapshots(array $ids): array;
+    public function snapshots(array $ids, string $requestedBy): array;
 
     /** @param list<string> $ids */
-    public function areCompleted(array $ids): bool;
+    public function areCompleted(array $ids, string $requestedBy): bool;
 }

@@ -13,10 +13,12 @@ use NetCode\Domain\Rule\BusinessRuleException;
 use NetCode\Kit\Clock;
 use NetCode\Kit\SystemClock;
 use NetCode\Media\Api\Contracts\FileDirectory;
+use NetCode\Media\Application\Ports\FileAccess;
 use NetCode\Media\Application\Ports\ObjectStorage;
 use NetCode\Media\Domain\Contracts\FileRepository;
 use NetCode\Media\Domain\Exceptions\FileNotFoundException;
 use NetCode\Media\Domain\Exceptions\UploadNotConfirmedException;
+use NetCode\Media\Infrastructure\Access\UploaderOnlyFileAccess;
 use NetCode\Media\Infrastructure\Anticorruption\FileDirectoryAdapter;
 use NetCode\Media\Infrastructure\Console\PurgePendingUploadsCommand;
 use NetCode\Media\Infrastructure\DataAccess\Repositories\EloquentFileRepository;
@@ -32,6 +34,7 @@ final class MediaServiceProvider extends ServiceProvider
         $this->app->bind(Clock::class, SystemClock::class);
         $this->app->bind(FileRepository::class, EloquentFileRepository::class);
         $this->app->bind(FileDirectory::class, FileDirectoryAdapter::class);
+        $this->app->bind(FileAccess::class, UploaderOnlyFileAccess::class);
 
         $this->app->bind(ObjectStorage::class, fn (): ObjectStorage => new S3ObjectStorage(
             disk: (string) config('media.disk'),

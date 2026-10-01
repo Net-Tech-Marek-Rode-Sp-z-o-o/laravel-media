@@ -7,21 +7,20 @@ namespace NetCode\Media\Application\Queries\GetFile;
 use NetCode\Bus\Query\QueryHandler;
 use NetCode\Media\Application\Dto\FileView;
 use NetCode\Media\Application\Ports\ObjectStorage;
-use NetCode\Media\Domain\Contracts\FileRepository;
+use NetCode\Media\Application\Services\AccessibleFiles;
 use NetCode\Media\Domain\Policies\UploadPolicy;
-use NetCode\Media\Domain\ValueObjects\FileId;
 
 final readonly class GetFileHandler implements QueryHandler
 {
     public function __construct(
-        private FileRepository $files,
         private ObjectStorage $storage,
+        private AccessibleFiles $accessible,
     ) {}
 
     public function __invoke(
         GetFile $query,
     ): FileView {
-        $file = $this->files->getById(FileId::fromString($query->fileId));
+        $file = $this->accessible->get($query->fileId, $query->requestedBy);
 
         return new FileView(
             id: $file->id()->value(),

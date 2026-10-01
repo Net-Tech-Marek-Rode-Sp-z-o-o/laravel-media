@@ -13,5 +13,6 @@ final readonly class DeleteFile implements Command
 {
     public function __construct(
         public string $fileId,
+        public string $requestedBy,
     ) {}
 }

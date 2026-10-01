@@ -13,6 +13,7 @@ final readonly class CompleteUpload implements Command
 {
     public function __construct(
         public string $fileId,
+        public string $requestedBy,
         public string|null $checksum = null,
         public int|null $size = null,
     ) {}

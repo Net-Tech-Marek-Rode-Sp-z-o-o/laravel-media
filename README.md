@@ -17,7 +17,8 @@ php artisan migrate
 Presigned S3 upload (initiate → complete), read + delete, temporary download URLs, the
 `FileDirectory` contract (`snapshots` + `areCompleted`) for cross-module reference, and a daily purge
 of abandoned (initiated-but-never-completed) uploads. Authentication is host-wired via the
-`CurrentUser` port; storage via the `ObjectStorage` port (default: Laravel S3 disks).
+`CurrentUser` port; access to a file via the `FileAccess` port (default: the uploader only); storage
+via the `ObjectStorage` port (default: Laravel S3 disks). Upgrading from 0.2: see `docs/usage.md`.
 
 ## License
 

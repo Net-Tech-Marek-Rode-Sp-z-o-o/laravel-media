@@ -20,15 +20,19 @@ URL, then confirms.
 
 ## Read & delete
 
+Complete, read and delete load the file through `AccessibleFiles`, which asks the `FileAccess` port
+whether the current user may touch it. A refused file answers **404**, the same as an unknown id.
+
 - `GET /{prefix}/{fileId}` — returns `{data:{id, original_name, mime, size, status, download_url}}` with a
   fresh presigned **download** URL. Unknown id → **404**.
 - `DELETE /{prefix}/{fileId}` — removes the stored object **and** the record → **204**.
 
 ## Referencing files from other modules — `FileDirectory`
 
-Other modules never touch the `files` table. They depend on `NetCode\Media\Contract\FileDirectory`:
-`snapshots($ids)` returns `FileSnapshot`s (`{id, originalName, mime, size, downloadUrl}`) and
-`areCompleted($ids)` gates a workflow on every referenced file being uploaded. The host binds it to the
+Other modules never touch the `files` table. They depend on `NetCode\Media\Api\Contracts\FileDirectory`:
+`snapshots($ids, $requestedBy)` returns `FileSnapshot`s (`{id, originalName, mime, size, downloadUrl}`) and
+`areCompleted($ids, $requestedBy)` gates a workflow on every referenced file being uploaded. Both ask
+`FileAccess`: a file the requester may not access is left out, the same as an unknown id. The host binds it to the
 package's `FileDirectoryAdapter`.
 
 ## Purge of abandoned uploads

@@ -7,9 +7,9 @@ namespace NetCode\Media\Application\Commands\CompleteUpload;
 use NetCode\Bus\Command\CommandHandler;
 use NetCode\Kit\Clock;
 use NetCode\Media\Application\Ports\ObjectStorage;
+use NetCode\Media\Application\Services\AccessibleFiles;
 use NetCode\Media\Domain\Contracts\FileRepository;
 use NetCode\Media\Domain\Exceptions\UploadNotConfirmedException;
-use NetCode\Media\Domain\ValueObjects\FileId;
 
 final readonly class CompleteUploadHandler implements CommandHandler
 {
@@ -17,12 +17,13 @@ final readonly class CompleteUploadHandler implements CommandHandler
         private Clock $clock,
         private FileRepository $files,
         private ObjectStorage $storage,
+        private AccessibleFiles $accessible,
     ) {}
 
     public function __invoke(
         CompleteUpload $command,
     ): void {
-        $file = $this->files->getById(FileId::fromString($command->fileId));
+        $file = $this->accessible->get($command->fileId, $command->requestedBy);
 
         if (! $this->storage->exists($file->key())) {
             throw UploadNotConfirmedException::forKey($file->key());

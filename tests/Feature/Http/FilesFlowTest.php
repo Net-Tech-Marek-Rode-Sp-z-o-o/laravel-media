@@ -50,7 +50,7 @@ final class FilesFlowTest extends TestCase
     #[Test]
     public function it_rejects_completing_when_the_object_is_missing(): void
     {
-        $this->storage->objectExists = false;
+        $this->storage->clientUploads = false;
 
         $id = (string) $this->postJson('/files', [
             'filename' => 'x.pdf',

@@ -14,4 +14,8 @@ return [
 
     'presign_disk' => 's3_public',
 
+    'max_upload_bytes' => 104_857_600,
+
+    'allowed_types' => [],
+
 ];

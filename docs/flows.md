@@ -11,12 +11,17 @@ URL, then confirms.
 
 1. `POST /{prefix}` `{filename, mime, size}` — `InitiateUpload` creates a **pending** `File` (a random
    storage key, the `CurrentUser`'s id as `uploaded_by`), records `FileUploadInitiated`, and returns a
-   presigned S3 **upload** URL: `201 {data:{file_id, upload_url}}`. `size` is capped by `UploadPolicy`.
+   presigned S3 **upload** URL: `201 {data:{file_id, upload_url}}`. `size` and `mime` are checked against `media.max_upload_bytes` and
+   `media.allowed_types`.
 2. The client **PUTs the file bytes to `upload_url`** directly (S3), out of band.
-3. `POST /{prefix}/{fileId}/complete` `{checksum?, size?}` — `CompleteUpload` verifies the object is
-   actually in storage (`ObjectStorage::exists`) — if not, **409** (`UploadNotConfirmedException`) — then
-   marks the `File` **completed** (guarded by `FileMustBePending`; a non-pending file → **409**), records
-   `FileUploadCompleted`. Responds **204**.
+3. `POST /{prefix}/{fileId}/complete` `{checksum?}` — a non-pending file → **409** (`FileMustBePending`).
+   `CompleteUpload` moves the object on the server from `uploads/{id}/…` to `files/{id}/…`
+   (`ObjectStorage::move`), so the upload URL can no longer change it, then inspects the moved object
+   (`ObjectStorage::inspect`: real size and the type detected from the first bytes) — if it is
+   missing, **409** (`UploadNotConfirmedException`); if storage cannot read it, **503**. If the
+   stored file breaks `UploadLimits`, the object is deleted, the `File` becomes **failed**, records
+   `FileUploadRejected`, and the response is **422** `{message, code}`. Otherwise the `File` becomes
+   **completed** with the stored size, records `FileUploadCompleted`, and responds **204**.
 
 ## Read & delete
 

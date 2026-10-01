@@ -12,7 +12,9 @@ interface ObjectStorage
 
     public function temporaryDownloadUrl(string $key, int $minutes): string;
 
-    public function exists(string $key): bool;
+    public function inspect(string $key): StoredObject|null;
+
+    public function move(string $from, string $to): void;
 
     public function delete(string $key): void;
 }

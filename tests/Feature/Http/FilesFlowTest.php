@@ -39,7 +39,8 @@ final class FilesFlowTest extends TestCase
         $this->getJson("/files/{$id}")
             ->assertOk()
             ->assertJsonPath('data.status', 'completed')
-            ->assertJsonPath('data.original_name', 'contract.pdf');
+            ->assertJsonPath('data.original_name', 'contract.pdf')
+            ->assertJsonPath('data.download_url', "https://s3.test/files/{$id}/contract.pdf");
 
         $this->deleteJson("/files/{$id}")->assertNoContent();
         $this->assertNotEmpty($this->storage->deleted);
@@ -50,7 +51,7 @@ final class FilesFlowTest extends TestCase
     #[Test]
     public function it_rejects_completing_when_the_object_is_missing(): void
     {
-        $this->storage->objectExists = false;
+        $this->storage->clientUploads = false;
 
         $id = (string) $this->postJson('/files', [
             'filename' => 'x.pdf',

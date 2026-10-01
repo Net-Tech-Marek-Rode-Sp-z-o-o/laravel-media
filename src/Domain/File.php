@@ -9,17 +9,20 @@ use NetCode\Domain\AggregateRoot;
 use NetCode\Domain\Rule\BusinessRuleException;
 use NetCode\Domain\Rule\Specification;
 use NetCode\Media\Domain\Enums\FileStatus;
+use NetCode\Media\Domain\Enums\UploadRejection;
 use NetCode\Media\Domain\Events\FileUploadCompleted;
 use NetCode\Media\Domain\Events\FileUploadInitiated;
+use NetCode\Media\Domain\Events\FileUploadRejected;
 use NetCode\Media\Domain\Rules\FileMustBePending;
 use NetCode\Media\Domain\ValueObjects\FileId;
+use NetCode\Media\Domain\ValueObjects\UploadLimits;
 
 final class File extends AggregateRoot
 {
     private function __construct(
         private readonly FileId $id,
         private readonly string $disk,
-        private readonly string $key,
+        private string $key,
         private readonly string $originalName,
         private readonly string $mime,
         private int $size,
@@ -87,16 +90,27 @@ final class File extends AggregateRoot
     }
 
     /** @throws BusinessRuleException */
-    public function complete(string|null $checksum, int|null $size, DateTimeImmutable $now): void
-    {
+    public function complete(
+        string|null $checksum,
+        int $storedSize,
+        string $detectedMime,
+        UploadLimits $limits,
+        DateTimeImmutable $now,
+    ): UploadRejection|null {
         Specification::check(new FileMustBePending($this));
+
+        $this->key = $this->storedKey();
+        $this->size = $storedSize;
+        $rejection = $limits->rejectionFor($storedSize, $this->mime, $detectedMime);
+
+        if ($rejection !== null) {
+            $this->reject($rejection, $now);
+
+            return $rejection;
+        }
 
         if ($checksum !== null) {
             $this->checksum = $checksum;
-        }
-
-        if ($size !== null) {
-            $this->size = $size;
         }
 
         $this->status = FileStatus::Completed;
@@ -106,6 +120,8 @@ final class File extends AggregateRoot
             fileId: $this->id,
             occurredOn: $now,
         ));
+
+        return null;
     }
 
     public function isPending(): bool
@@ -116,6 +132,11 @@ final class File extends AggregateRoot
     public function isCompleted(): bool
     {
         return $this->status === FileStatus::Completed;
+    }
+
+    public function isFailed(): bool
+    {
+        return $this->status === FileStatus::Failed;
     }
 
     public function id(): FileId
@@ -131,6 +152,11 @@ final class File extends AggregateRoot
     public function key(): string
     {
         return $this->key;
+    }
+
+    public function storedKey(): string
+    {
+        return sprintf('files/%s/%s', $this->id->value(), basename($this->key));
     }
 
     public function originalName(): string
@@ -166,5 +192,16 @@ final class File extends AggregateRoot
     public function completedAt(): DateTimeImmutable|null
     {
         return $this->completedAt;
+    }
+
+    private function reject(UploadRejection $reason, DateTimeImmutable $now): void
+    {
+        $this->status = FileStatus::Failed;
+
+        $this->recordThat(new FileUploadRejected(
+            fileId: $this->id,
+            reason: $reason,
+            occurredOn: $now,
+        ));
     }
 }

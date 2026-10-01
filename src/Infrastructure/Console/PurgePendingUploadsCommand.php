@@ -13,20 +13,21 @@ final class PurgePendingUploadsCommand extends Command
 {
     protected $signature = 'media:purge-uploads {--hours=24}';
 
-    protected $description = 'Delete uploads that were initiated but never completed.';
+    protected $description = 'Delete uploads that were never completed or were rejected.';
 
     public function handle(Clock $clock, FileRepository $files, ObjectStorage $storage): int
     {
         $threshold = $clock->now()->modify(sprintf('-%d hours', (int) $this->option('hours')));
 
-        $stale = $files->pendingOlderThan($threshold);
+        $stale = $files->unfinishedOlderThan($threshold);
 
         foreach ($stale as $file) {
             $storage->delete($file->key());
+            $storage->delete($file->storedKey());
             $files->delete($file);
         }
 
-        $this->info(sprintf('Purged %d pending upload(s).', count($stale)));
+        $this->info(sprintf('Purged %d unfinished upload(s).', count($stale)));
 
         return self::SUCCESS;
     }

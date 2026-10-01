@@ -7,6 +7,4 @@ namespace NetCode\Media\Domain\Policies;
 final class UploadPolicy
 {
     public const int URL_TTL_MINUTES = 15;
-
-    public const int MAX_UPLOAD_BYTES = 104_857_600;
 }

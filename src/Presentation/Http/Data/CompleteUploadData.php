@@ -10,6 +10,5 @@ final class CompleteUploadData extends Data
 {
     public function __construct(
         public string|null $checksum = null,
-        public int|null $size = null,
     ) {}
 }

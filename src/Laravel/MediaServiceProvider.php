@@ -18,10 +18,12 @@ use NetCode\Media\Application\Ports\ObjectStorage;
 use NetCode\Media\Domain\Contracts\FileRepository;
 use NetCode\Media\Domain\Exceptions\FileNotFoundException;
 use NetCode\Media\Domain\Exceptions\UploadNotConfirmedException;
+use NetCode\Media\Domain\ValueObjects\UploadLimits;
 use NetCode\Media\Infrastructure\Access\UploaderOnlyFileAccess;
 use NetCode\Media\Infrastructure\Anticorruption\FileDirectoryAdapter;
 use NetCode\Media\Infrastructure\Console\PurgePendingUploadsCommand;
 use NetCode\Media\Infrastructure\DataAccess\Repositories\EloquentFileRepository;
+use NetCode\Media\Infrastructure\Storage\ObjectStorageException;
 use NetCode\Media\Infrastructure\Storage\S3ObjectStorage;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -35,6 +37,10 @@ final class MediaServiceProvider extends ServiceProvider
         $this->app->bind(FileRepository::class, EloquentFileRepository::class);
         $this->app->bind(FileDirectory::class, FileDirectoryAdapter::class);
         $this->app->bind(FileAccess::class, UploaderOnlyFileAccess::class);
+        $this->app->bind(UploadLimits::class, static fn (): UploadLimits => UploadLimits::of(
+            maxBytes: (int) config('media.max_upload_bytes'),
+            allowedTypes: (array) config('media.allowed_types'),
+        ));
 
         $this->app->bind(ObjectStorage::class, fn (): ObjectStorage => new S3ObjectStorage(
             disk: (string) config('media.disk'),
@@ -83,6 +89,7 @@ final class MediaServiceProvider extends ServiceProvider
 
         $handler->renderable(fn (FileNotFoundException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], Response::HTTP_NOT_FOUND));
         $handler->renderable(fn (UploadNotConfirmedException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], Response::HTTP_CONFLICT));
+        $handler->renderable(fn (ObjectStorageException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], Response::HTTP_SERVICE_UNAVAILABLE));
         $handler->renderable(fn (BusinessRuleException $e): JsonResponse => new JsonResponse(['message' => $e->getMessage()], Response::HTTP_CONFLICT));
     }
 }

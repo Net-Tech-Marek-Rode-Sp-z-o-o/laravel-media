@@ -22,12 +22,18 @@ final readonly class CompleteUploadController
         CompleteUploadData $data,
         string $fileId,
     ): JsonResponse {
-        $this->bus->dispatch(new CompleteUpload(
+        $rejection = $this->bus->dispatch(new CompleteUpload(
             fileId: $fileId,
             requestedBy: $this->currentUser->id(),
             checksum: $data->checksum,
-            size: $data->size,
         ));
+
+        if ($rejection !== null) {
+            return new JsonResponse(
+                data: ['message' => $rejection->message(), 'code' => $rejection->value],
+                status: Response::HTTP_UNPROCESSABLE_ENTITY,
+            );
+        }
 
         return new JsonResponse(status: Response::HTTP_NO_CONTENT);
     }

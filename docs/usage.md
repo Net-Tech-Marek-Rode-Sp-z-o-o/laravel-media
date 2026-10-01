@@ -32,8 +32,8 @@ upload URL — the bytes never pass through the app.
 | `upload_middleware` | `[]` | extra middleware on the initiate route (e.g. an idempotency middleware) |
 | `disk` | `s3` | filesystem disk for object ops |
 | `presign_disk` | `s3_public` | filesystem disk for presigned URLs |
-| `max_upload_bytes` | `104857600` | largest accepted file, checked on initiate (declared size) and on complete (stored size) |
-| `allowed_types` | `[]` | declared MIME type => MIME types accepted from the stored bytes; empty accepts any type |
+| `max_upload_bytes` | `104857600` | size limit for types without their own `max_bytes`, checked on initiate (declared size) and on complete (stored size) |
+| `allowed_types` | `[]` | declared MIME type => MIME types accepted from the stored bytes, optionally with its own size limit; empty accepts any type |
 
 ## Endpoints
 
@@ -57,15 +57,21 @@ The presigned PUT URL does not bind the size, so the client can store more than 
 stays valid for 15 minutes. On complete the package first moves the object on the server from
 `uploads/{id}/…` to `files/{id}/…`, a key no presigned URL covers, so a later PUT to the same URL
 cannot replace an accepted file. It then reads the real size from storage and the type from the
-first 4 KB of the moved object (`finfo`). A file over `max_upload_bytes`, or with a detected type that `allowed_types` does not list
+first 4 KB of the moved object (`finfo`). A file over its size limit, or with a detected type that `allowed_types` does not list
 for the declared type, is deleted from storage, marked `failed`, and answers `422` with the code
-`file.too_large` or `file.type_mismatch`. CSV files are often detected as `text/plain`, so list both:
+`file.too_large` or `file.type_mismatch`. CSV files are often detected as `text/plain`, so list both.
+
+A type can have its own size limit with `['detected' => [...], 'max_bytes' => int]`; it replaces
+`max_upload_bytes` for that declared type, on initiate and on complete. The plain list form keeps the
+global limit:
 
 ```php
+'max_upload_bytes' => 5_000_000,
+
 'allowed_types' => [
     'application/pdf' => ['application/pdf'],
     'image/jpeg' => ['image/jpeg'],
-    'text/csv' => ['text/csv', 'text/plain'],
+    'text/csv' => ['detected' => ['text/csv', 'text/plain'], 'max_bytes' => 2_000_000],
 ],
 ```
 

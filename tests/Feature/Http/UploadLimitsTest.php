@@ -89,6 +89,32 @@ final class UploadLimitsTest extends TestCase
     }
 
     #[Test]
+    public function it_applies_the_size_limit_of_the_declared_type(): void
+    {
+        $this->allowCsvUpTo(2_000_000);
+
+        $this->postJson('/files', ['filename' => 'big.csv', 'mime' => 'text/csv', 'size' => 2_000_001])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('size');
+        $this->postJson('/files', ['filename' => 'big.pdf', 'mime' => 'application/pdf', 'size' => 4_000_000])
+            ->assertCreated();
+    }
+
+    #[Test]
+    public function it_rejects_a_stored_file_above_the_limit_of_its_type(): void
+    {
+        $this->allowCsvUpTo(2_000_000);
+        $id = (string) $this->postJson('/files', ['filename' => 'rows.csv', 'mime' => 'text/csv', 'size' => 1000])
+            ->assertCreated()
+            ->json('data.file_id');
+        $this->storage->putWithUploadUrl($id, new StoredObject(size: 3_000_000, mime: 'text/plain'));
+
+        $this->postJson("/files/{$id}/complete", [])
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'file.too_large');
+    }
+
+    #[Test]
     public function it_refuses_to_initiate_an_upload_above_the_limit(): void
     {
         $this->postJson('/files', ['filename' => 'big.pdf', 'mime' => 'application/pdf', 'size' => 5_000_001])
@@ -102,6 +128,14 @@ final class UploadLimitsTest extends TestCase
         $this->postJson('/files', ['filename' => 'x.svg', 'mime' => 'image/svg+xml', 'size' => 10])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('mime');
+    }
+
+    private function allowCsvUpTo(int $maxBytes): void
+    {
+        config()->set('media.allowed_types', [
+            'application/pdf' => ['application/pdf'],
+            'text/csv' => ['detected' => ['text/csv', 'text/plain'], 'max_bytes' => $maxBytes],
+        ]);
     }
 
     private function initiate(): string

@@ -28,7 +28,9 @@ final readonly class GetFileHandler implements QueryHandler
             mime: $file->mime(),
             size: $file->size(),
             status: $file->status()->value,
-            downloadUrl: $this->storage->temporaryDownloadUrl($file->key(), UploadPolicy::URL_TTL_MINUTES),
+            downloadUrl: $file->isCompleted()
+                ? $this->storage->temporaryDownloadUrl($file->key(), UploadPolicy::URL_TTL_MINUTES)
+                : null,
         );
     }
 }

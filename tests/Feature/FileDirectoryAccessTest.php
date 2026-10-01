@@ -35,6 +35,21 @@ final class FileDirectoryAccessTest extends TestCase
 
         $this->assertCount(1, $snapshots);
         $this->assertSame($id, $snapshots[0]->id);
+        $this->assertSame("https://s3.test/files/{$id}/receipt.pdf", $snapshots[0]->downloadUrl);
+    }
+
+    #[Test]
+    public function it_gives_no_download_url_for_a_pending_file(): void
+    {
+        $id = (string) $this->postJson('/files', [
+            'filename' => 'receipt.pdf',
+            'mime' => 'application/pdf',
+            'size' => 2048,
+        ])->assertCreated()->json('data.file_id');
+
+        $snapshots = $this->directory->snapshots([$id], FakeCurrentUser::ID);
+
+        $this->assertNull($snapshots[0]->downloadUrl);
     }
 
     #[Test]

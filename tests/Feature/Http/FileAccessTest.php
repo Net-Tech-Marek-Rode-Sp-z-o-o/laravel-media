@@ -59,7 +59,9 @@ final class FileAccessTest extends TestCase
         $this->postJson("/files/{$id}/complete", [])->assertNotFound();
 
         $this->actAs(FakeCurrentUser::ID);
-        $this->getJson("/files/{$id}")->assertJsonPath('data.status', 'pending');
+        $this->getJson("/files/{$id}")
+            ->assertJsonPath('data.status', 'pending')
+            ->assertJsonPath('data.download_url', null);
     }
 
     #[Test]

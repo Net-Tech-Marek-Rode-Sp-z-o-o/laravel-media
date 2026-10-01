@@ -67,10 +67,10 @@ final readonly class EloquentFileRepository implements FileRepository
     }
 
     /** @return array<int, File> */
-    public function pendingOlderThan(DateTimeImmutable $threshold): array
+    public function unfinishedOlderThan(DateTimeImmutable $threshold): array
     {
         return FileModel::query()
-            ->where('status', FileStatus::Pending->value)
+            ->whereIn('status', [FileStatus::Pending->value, FileStatus::Failed->value])
             ->where('created_at', '<', $threshold)
             ->get()
             ->map($this->mapper->toDomain(...))

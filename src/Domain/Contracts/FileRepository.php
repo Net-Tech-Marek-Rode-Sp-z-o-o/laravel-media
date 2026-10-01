@@ -25,5 +25,5 @@ interface FileRepository
     public function delete(File $file): void;
 
     /** @return array<int, File> */
-    public function pendingOlderThan(DateTimeImmutable $threshold): array;
+    public function unfinishedOlderThan(DateTimeImmutable $threshold): array;
 }

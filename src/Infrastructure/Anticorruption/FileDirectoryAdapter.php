@@ -58,7 +58,9 @@ final readonly class FileDirectoryAdapter implements FileDirectory
             originalName: $file->originalName(),
             mime: $file->mime(),
             size: $file->size(),
-            downloadUrl: $this->storage->temporaryDownloadUrl($file->key(), UploadPolicy::URL_TTL_MINUTES),
+            downloadUrl: $file->isCompleted()
+                ? $this->storage->temporaryDownloadUrl($file->key(), UploadPolicy::URL_TTL_MINUTES)
+                : null,
         );
     }
 

@@ -11,6 +11,6 @@ final readonly class FileSnapshot
         public string $originalName,
         public string $mime,
         public int $size,
-        public string $downloadUrl,
+        public string|null $downloadUrl,
     ) {}
 }
